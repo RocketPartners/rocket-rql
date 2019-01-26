@@ -1,0 +1,28 @@
+apply plugin: 'eclipse'
+apply plugin: 'java'
+apply plugin: 'maven'
+
+version = '0.0.1'
+group = 'com.github.RocketPartners'
+
+repositories { 
+   mavenLocal()
+   mavenCentral() 
+}
+
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
+sourceCompatibility = 1.6
+
+dependencies {
+	testCompile 'junit:junit:4.12'
+}
+
+
+jar {
+    baseName 'rocket-rql'
+}
+
+
