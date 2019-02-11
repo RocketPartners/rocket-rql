@@ -30,6 +30,22 @@ public class Order<T extends Order, P extends Query> extends Builder<T, P>
       withTokens("order", "sort");
    }
 
+   /**
+    * Returns true if the first sort is ascending or if there are no sorts.
+    * @return
+    */
+   public boolean isAsc(int index)
+   {
+      List<Sort> sorts = getSorts();
+      return sorts.size() <= index ? true : sorts.get(index).isAsc();
+   }
+
+   public String getProperty(int index)
+   {
+      List<Sort> sorts = getSorts();
+      return sorts.size() <= index ? null : sorts.get(index).getProperty();
+   }
+
    public List<Sort> getSorts()
    {
       List<Sort> sorts = new ArrayList();

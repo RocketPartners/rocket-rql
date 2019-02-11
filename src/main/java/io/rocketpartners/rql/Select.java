@@ -103,6 +103,20 @@ public class Select<T extends Select, P extends Query> extends Builder<T, P>
       }
    }
 
+   public List<String> getColumnNames()
+   {
+      List<String> columns = new ArrayList();
+
+      for (Term include : findAll("includes"))
+      {
+         for (Term child : include.getTerms())
+         {
+            columns.add(child.getToken());
+         }
+      }
+      return getColumnNames();
+   }
+
    public List<Term> columns()
    {
       List<Term> columns = new ArrayList();

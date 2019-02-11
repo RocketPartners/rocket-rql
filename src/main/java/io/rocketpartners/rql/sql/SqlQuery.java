@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.rocketpartners.db.Table;
 import io.rocketpartners.fluent.Term;
 import io.rocketpartners.rql.Group;
 import io.rocketpartners.rql.Order;
@@ -31,18 +32,33 @@ import io.rocketpartners.rql.Query;
 import io.rocketpartners.rql.Select;
 import io.rocketpartners.rql.Where;
 
-public class SqlQuery extends Query<SqlQuery, SqlQuery, Select<Select<Select, SqlQuery>, SqlQuery>, Where<Where<Where, SqlQuery>, SqlQuery>, Group<Group<Group, SqlQuery>, SqlQuery>, Order<Order<Order, SqlQuery>, SqlQuery>, Page<Page<Page, SqlQuery>, SqlQuery>>
+public class SqlQuery extends Query<Table, SqlQuery, SqlQuery, Select<Select<Select, SqlQuery>, SqlQuery>, Where<Where<Where, SqlQuery>, SqlQuery>, Group<Group<Group, SqlQuery>, SqlQuery>, Order<Order<Order, SqlQuery>, SqlQuery>, Page<Page<Page, SqlQuery>, SqlQuery>>
 {
-   protected String    type        = null;
-   String              selectSql   = null;
+   protected String type        = null;
+   String           selectSql   = null;
 
-   protected char      stringQuote = '\'';
-   protected char      columnQuote = '"';
+   protected char   stringQuote = '\'';
+   protected char   columnQuote = '"';
 
-   Map<String, String> propertyMap = new HashMap();
-
-   public String toSql(SqlReplacer replacer)
+   public SqlQuery(Table table)
    {
+      super(table);
+   }
+
+   public String getPreparedStmt()
+   {
+      return toSql(true);
+   }
+
+   public String getDynamicStmt()
+   {
+      return toSql(false);
+   }
+
+   protected String toSql(boolean preparedStmt)
+   {
+      clearValues();
+
       Parts parts = new Parts(selectSql);
 
       StringBuffer cols = new StringBuffer();
@@ -54,7 +70,7 @@ public class SqlQuery extends Query<SqlQuery, SqlQuery, Select<Select<Select, Sq
          if (term.hasToken("as"))
          {
             Term function = term.getTerm(0);
-            cols.append(" ").append(print(function, replacer, null));
+            cols.append(" ").append(print(function, null, preparedStmt));
 
             String colName = term.getToken(1);
             if (!(empty(colName) || colName.indexOf("$$$ANON") > -1))
@@ -102,7 +118,7 @@ public class SqlQuery extends Query<SqlQuery, SqlQuery, Select<Select<Select, Sq
       {
          Term term = terms.get(i);
 
-         String where = print(term, replacer, null);
+         String where = print(term, null, preparedStmt);
          if (where != null)
          {
             if (empty(parts.where))
@@ -214,7 +230,22 @@ public class SqlQuery extends Query<SqlQuery, SqlQuery, Select<Select<Select, Sq
       return s;
    }
 
-   protected String print(Term term, SqlReplacer replacer, String col)
+   public String replace(Term parent, Term leaf, int index, String col, String val)
+   {
+      if (val == null || val.trim().equalsIgnoreCase("null"))
+         return "NULL";
+
+      if (parent.hasToken("if") && index > 0)
+      {
+         if (SqlQuery.isNum(leaf))
+            return val;
+      }
+
+      withColValue(col, val);
+      return "?";
+   }
+
+   protected String print(Term term, String col, boolean preparedStmt)
    {
       if (term.isLeaf())
       {
@@ -247,14 +278,14 @@ public class SqlQuery extends Query<SqlQuery, SqlQuery, Select<Select<Select, Sq
       List<String> strings = new ArrayList();
       for (Term t : terms)
       {
-         strings.add(print(t, replacer, col));
+         strings.add(print(t, col, preparedStmt));
       }
 
       List<String> origionals = new ArrayList(strings);
 
       //allows for callers to substitute callable statement "?"s
       //and/or to account for data type conversion 
-      if (replacer != null)
+      if (preparedStmt)
       {
          for (int i = 0; i < terms.size(); i++)
          {
@@ -265,7 +296,7 @@ public class SqlQuery extends Query<SqlQuery, SqlQuery, Select<Select<Select, Sq
                if (val.charAt(0) != columnQuote)
                {
                   //val = t.getToken();//go back to the unprinted/quoted version
-                  strings.set(i, replacer.replace(term, t, i, col, val));
+                  strings.set(i, replace(term, t, i, col, val));
                }
             }
          }
@@ -424,26 +455,6 @@ public class SqlQuery extends Query<SqlQuery, SqlQuery, Select<Select<Select, Sq
       this.columnQuote = columnQuote;
    }
 
-   public SqlQuery withPropertyMap(String rqlName, String actualName)
-   {
-      propertyMap.put(rqlName.toLowerCase(), actualName);
-      return this;
-   }
-
-   public SqlQuery withPropertyMap(Map<String, String> propertyMap)
-   {
-      for (String rqlName : propertyMap.keySet())
-      {
-         withPropertyMap(rqlName, propertyMap.get(rqlName));
-      }
-      return this;
-   }
-
-   public String getPropertyName(String rqlName)
-   {
-      return propertyMap.get(rqlName.toLowerCase());
-   }
-
    protected boolean isCol(Term term)
    {
       if (!term.isLeaf())
@@ -459,7 +470,7 @@ public class SqlQuery extends Query<SqlQuery, SqlQuery, Select<Select<Select, Sq
          return false;
 
       String token = term.getToken();
-      if (propertyMap.containsKey(token.toLowerCase()))
+      if (colNames.containsKey(token.toLowerCase()))
          return true;
 
       if (term.getParent() != null && term.getParent().indexOf(term) == 0)
@@ -468,20 +479,25 @@ public class SqlQuery extends Query<SqlQuery, SqlQuery, Select<Select<Select, Sq
       return false;
    }
 
-   protected String asCol(String col)
+   public String quoteCol(String str)
    {
-      if (propertyMap.containsKey(col.toLowerCase()))
-         col = propertyMap.get(col.toLowerCase());
-
-      return columnQuote + col.toString() + columnQuote;
+      return columnQuote + str + columnQuote;
    }
 
-   protected String asString(String string)
+   public String asCol(String col)
+   {
+      if (colNames.containsKey(col.toLowerCase()))
+         col = colNames.get(col.toLowerCase());
+
+      return quoteCol(col);
+   }
+
+   public String asString(String string)
    {
       return stringQuote + string + stringQuote;
    }
 
-   protected String asString(Term term)
+   public String asString(Term term)
    {
       String token = term.token;
       Term parent = term.getParent();

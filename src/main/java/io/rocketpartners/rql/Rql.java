@@ -16,8 +16,11 @@
 package io.rocketpartners.rql;
 
 import java.util.HashMap;
+import java.util.Map;
 
-public class Rql
+import io.rocketpartners.db.Table;
+
+public abstract class Rql<T extends Table, Q extends Query>
 {
    static HashMap<String, Rql> RQLS = new HashMap();
 
@@ -38,9 +41,40 @@ public class Rql
       this.type = type;
    }
 
+   abstract protected Q buildQuery(T table, Map<String, String> queryParams);
+
    public String getType()
    {
       return type;
    }
+
+   //   public B build(String rql) throws Exception
+   //   {
+   //      B builder = build();
+   //
+   //      String[] terms = rql.split("\\&");
+   //      for (int i = 0; i < terms.length; i++)
+   //      {
+   //         builder.withTerm(terms[i]);
+   //      }
+   //
+   //      return builder;
+   //   }
+   //
+   //   public B build(Map<String, String> queryParams) throws Exception
+   //   {
+   //      B builder = build();
+   //      for (String term : queryParams.keySet())
+   //      {
+   //         String value = queryParams.get(term);
+   //         if (!J.empty(term))
+   //         {
+   //            term = term + "=" + value;
+   //         }
+   //         builder.withTerm(term);
+   //      }
+   //      return builder;
+   //
+   //   }
 
 }

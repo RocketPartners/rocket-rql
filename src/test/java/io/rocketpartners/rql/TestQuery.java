@@ -19,6 +19,7 @@ import org.junit.Test;
 
 import io.rocketpartners.fluent.Builder;
 import io.rocketpartners.rql.Query;
+import io.rocketpartners.rql.sql.SqlQuery;
 import junit.framework.TestCase;
 
 public class TestQuery extends TestCase
@@ -26,29 +27,36 @@ public class TestQuery extends TestCase
    @Test
    public void testPage() throws Exception
    {
-      Query q = new Query();
-      q.page().limit(5).offset(10);
-      assertTrue(q.page().getLimit() == 5);
-      assertTrue(q.page().getOffset() == 10);
-      assertTrue(q.page().getPageSize() == 5);
-      assertTrue(q.page().getPageNum() == 3);
-
-      q = new Query();
-      q.page().page(3).pageSize(5);
-      assertTrue(q.page().getLimit() == 5);
-      assertTrue(q.page().getOffset() == 10);
-      assertTrue(q.page().getPageSize() == 5);
-      assertTrue(q.page().getPageNum() == 3);
-
-      q = new Query();
-      q.withTerm("limit=5&offset=10");
-      assertTrue(q.page().getLimit() == 5);
-      assertTrue(q.page().getOffset() == 10);
-      assertTrue(q.page().getPageSize() == 5);
-      assertTrue(q.page().getPageNum() == 3);
-
-      q = new Query();
-
+//      Query q = new Query();
+//      q.page().limit(5).offset(10);
+//      assertTrue(q.page().getLimit() == 5);
+//      assertTrue(q.page().getOffset() == 10);
+//      assertTrue(q.page().getPageSize() == 5);
+//      assertTrue(q.page().getPageNum() == 3);
+//
+//      q = new Query();
+//      q.page().page(3).pageSize(5);
+//      assertTrue(q.page().getLimit() == 5);
+//      assertTrue(q.page().getOffset() == 10);
+//      assertTrue(q.page().getPageSize() == 5);
+//      assertTrue(q.page().getPageNum() == 3);
+//
+//      q = new Query();
+//      q.withTerm("limit=5&offset=10");
+//      assertTrue(q.page().getLimit() == 5);
+//      assertTrue(q.page().getOffset() == 10);
+//      assertTrue(q.page().getPageSize() == 5);
+//      assertTrue(q.page().getPageNum() == 3);
+//
+//      q = new Query();
+//
+//      SqlQuery sql = new SqlQuery();
+      
+//      sql.withTerms("lt(col, value)");
+//      
+//      sql.where().or(lt("col", sum("col2", )))
+//      
+//      sql.to
 
    }
 }

@@ -26,19 +26,5 @@ public class SqlReplacer
    public List<String> cols = new ArrayList();
    public List<String> vals = new ArrayList();
 
-   public String replace(Term parent, Term leaf, int index, String col, String val)
-   {
-      if (val == null || val.trim().equalsIgnoreCase("null"))
-         return "NULL";
 
-      if (parent.hasToken("if") && index > 0)
-      {
-         if (SqlQuery.isNum(leaf))
-            return val;
-      }
-
-      cols.add(col);
-      vals.add(val);
-      return "?";
-   }
 }

@@ -17,10 +17,12 @@ package io.rocketpartners.rql.sql;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 
+import io.rocketpartners.db.Table;
 import io.rocketpartners.rql.Rql;
 
-public class SqlRql extends Rql
+public class SqlRql extends Rql<Table, SqlQuery>
 {
    public static final HashSet<String> RESERVED = new HashSet(Arrays.asList(new String[]{"as", "includes", "sort", "order", "offset", "limit", "distinct", "aggregate", "function", "sum", "count", "min", "max"}));
 
@@ -35,21 +37,60 @@ public class SqlRql extends Rql
    private SqlRql(String type)
    {
       super(type);
+
+      if (type != null && type.toLowerCase().indexOf("mysql") > -1)
+      {
+         columnQuote = '`';
+         //setCalcRowsFound(true);
+      }
+
    }
 
-   public String toSql(String select, String rql, SqlReplacer replacer) throws Exception
-   {
-      SqlQuery query = new SqlQuery();
-      query.withTerms(rql);
-      query.withSelectSql(select);
+   protected char stringQuote = '\'';
+   protected char columnQuote = '"';
 
+   public String quoteCol(String col)
+   {
+      return columnQuote + col + columnQuote;
+   }
+
+   public String quoteStr(String str)
+   {
+      return stringQuote + str + stringQuote;
+   }
+
+   public SqlQuery buildQuery(Table table, Map<String, String> queryParams)
+   {
+      return buildQuery(table, queryParams, null);
+   }
+
+   public SqlQuery buildQuery(Table table, Map<String, String> queryParams, String select)
+   {
+      SqlQuery query = new SqlQuery(table);
       if (type != null && type.toLowerCase().indexOf("mysql") > -1)
       {
          query.withColumnQuote('`');
          //setCalcRowsFound(true);
       }
+      query.withTerms(queryParams);
+      query.withSelectSql(select);
 
-      return query.toSql(replacer);
+      return query;
    }
+
+   //   public SqlQuery build(Map<String, String> queryParams) throws Exception
+   //   {
+   //      SqlQuery query = new SqlQuery();
+   //      query.withTerms(queryParams);
+   //      return query;
+   //   }
+   //
+   //   public SqlQuery build(String select, Map<String, String> queryParams) throws Exception
+   //   {
+   //      SqlQuery query = new SqlQuery();
+   //      query.withSelectSql(select);
+   //      query.withTerms(queryParams);
+   //      return query;
+   //   }
 
 }

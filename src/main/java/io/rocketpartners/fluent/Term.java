@@ -110,6 +110,14 @@ public class Term
    {
       return terms.size() == 0;
    }
+   
+   public boolean isLeaf(int childIndex)
+   {
+      if(childIndex >= terms.size())
+         return false;
+      
+      return getTerm(childIndex).isLeaf();
+   }
 
    public int size()
    {
@@ -121,9 +129,14 @@ public class Term
       return terms.indexOf(child);
    }
 
+   public int getNumTerms()
+   {
+      return terms.size();
+   }
+   
    public List<Term> getTerms()
    {
-      return new ArrayList(terms);
+      return terms;
    }
 
    public Term getTerm(int index)

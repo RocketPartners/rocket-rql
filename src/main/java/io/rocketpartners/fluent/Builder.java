@@ -40,6 +40,30 @@ public class Builder<T, P extends Builder>
       withParent(parent);
    }
 
+
+   /**
+    * OVERRIDE ME TO ADD CUSTOM FUNCTIONALITY TO YOUR FLUENT API
+    * @param term
+    * @return
+    */
+   protected boolean addTerm(String token, Term term)
+   {
+      for (Builder builder : builders)
+      {
+         if (builder.addTerm(token, term))
+            return true;
+      }
+
+      if (tokens.contains(token))
+      {
+         terms.add(term);
+         return true;
+      }
+
+      return false;
+   }
+   
+   
    protected T r()
    {
       if (r != null)
@@ -135,6 +159,12 @@ public class Builder<T, P extends Builder>
       return r();
    }
 
+   public T clearTokens()
+   {
+      this.tokens.clear();
+      return r();
+   }
+   
    public T withTerm(String token, Object... terms)
    {
       withTerm(Term.term(null, token, terms));
@@ -188,27 +218,6 @@ public class Builder<T, P extends Builder>
       return r();
    }
 
-   /**
-    * OVERRIDE ME TO ADD CUSTOM FUNCTIONALITY TO YOUR FLUENT API
-    * @param term
-    * @return
-    */
-   protected boolean addTerm(String token, Term term)
-   {
-      for (Builder builder : builders)
-      {
-         if (builder.addTerm(token, term))
-            return true;
-      }
-
-      if (tokens.contains(token))
-      {
-         terms.add(term);
-         return true;
-      }
-
-      return false;
-   }
 
    public List<Term> getTerms()
    {

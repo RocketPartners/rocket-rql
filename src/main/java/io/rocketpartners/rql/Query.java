@@ -15,9 +15,16 @@
  */
 package io.rocketpartners.rql;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import io.rocketpartners.db.Table;
 import io.rocketpartners.fluent.Builder;
 import io.rocketpartners.fluent.Parser;
 import io.rocketpartners.fluent.Term;
+import io.rocketpartners.utils.KVPair;
 
 /**
  * 
@@ -30,13 +37,21 @@ import io.rocketpartners.fluent.Term;
  * @author wells
  *
  */
-public class Query<T extends Query, P extends Builder, S extends Select, W extends Where, R extends Group, O extends Order, G extends Page> extends Builder<T, P>
+public class Query<E extends Table, T extends Query, P extends Builder, S extends Select, W extends Where, R extends Group, O extends Order, G extends Page> extends Builder<T, P>
 {
-   S select = null;
-   W where  = null;
-   R group  = null;
-   O order  = null;
-   G page   = null;
+   protected E                   table    = null;
+
+   protected S                   select   = null;
+   protected W                   where    = null;
+   protected R                   group    = null;
+   protected O                   order    = null;
+   protected G                   page     = null;
+
+   //hold ordered list of columnName=literalValue pairs
+   protected List<KVPair>        values   = new ArrayList();
+
+   //a map of rql attribute names to underlying db column names
+   protected Map<String, String> colNames = new HashMap();
 
    //-- OVERRIDE ME TO ADD NEW FUNCTIONALITY --------------------------
    //------------------------------------------------------------------
@@ -79,14 +94,11 @@ public class Query<T extends Query, P extends Builder, S extends Select, W exten
    //------------------------------------------------------------------
    //------------------------------------------------------------------
 
-   public Query()
-   {
-      this(null);
-   }
-
-   public Query(String rql)
+   public Query(E table)
    {
       super(null);
+
+      this.table = table;
 
       //order matters when multiple clauses can accept the same term 
       where();
@@ -94,11 +106,6 @@ public class Query<T extends Query, P extends Builder, S extends Select, W exten
       order();
       group();
       select();
-
-      if (rql != null)
-      {
-         withTerms(rql);
-      }
    }
 
    @Override
@@ -158,5 +165,59 @@ public class Query<T extends Query, P extends Builder, S extends Select, W exten
          withBuilder(page);
       }
       return page;
+   }
+
+   public E table()
+   {
+      return table;
+   }
+
+   public T withColNames(Map<String, String> attrToColNames)
+   {
+      for (String attrName : attrToColNames.keySet())
+      {
+         colNames.put(attrName.toLowerCase(), attrToColNames.get(attrName));
+      }
+      return r();
+   }
+
+   public String getColumnName(String attribute)
+   {
+      return colNames.get(attribute.toLowerCase());
+   }
+
+   
+   public int getNumValues()
+   {
+      return values.size();
+   }
+   
+   protected T clearValues()
+   {
+      values.clear();
+      return r();
+   }
+
+   protected T withColValue(String key, String value)
+   {
+      String column = colNames.get(key.toLowerCase());
+      if (column == null)
+         column = key;
+
+      values.add(new KVPair(column, value));
+      return r();
+   }
+
+   public List<String> getColValueKeys()
+   {
+      List keys = new ArrayList();
+      for (KVPair kv : values)
+         keys.add(kv.getKey());
+      return keys;
+   }
+
+   public KVPair<String, String> getColValue(int index)
+   {
+      return values.get(index);
    }
 }
